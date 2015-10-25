@@ -2,26 +2,26 @@ __author__ = 'kamil'
 
 
 class page:
-    def __init__(self, page_offset = None, filename=None):
+    def __init__(self, page_offset=None, filename=None):
         self.count = 0  # number of records
-        self.total_space = 500
-        self.occupied_space = 100
+        self.total_space = 1000
+        self.occupied_space = 110
         self.lengths = []
         self.offsets = []
-        self.page_str = self.add_spaces_to_size('header0  $100  $0  $#', 100)
-        self.end_pointer = 100
-        self.header_offset = 100
+        self.page_str = self.add_spaces_to_size('header0  $110  $0  $#', 110)
+        self.end_pointer = 110
+        self.header_offset = 110
         self.d = 0
         self.page_offset = page_offset
-        self.page_str = self.add_spaces_to_size(self.page_str, 100)
+        self.page_str = self.add_spaces_to_size(self.page_str, 110)
         if filename != None:
             f = open(filename, 'r+')
             f.seek(page_offset)
-            self.page_str = f.read(500)
+            self.page_str = f.read(1000)
             f.close()
             if self.page_str[:len('header')] != 'header':
-                self.page_str = 'header0  $100  $0  $#'
-                self.page_str = self.add_spaces_to_size(self.page_str, 100)
+                self.page_str = 'header0  $110  $0  $#'
+                self.page_str = self.add_spaces_to_size(self.page_str, 110)
             header_str = self.page_str.split('#')[0]
             toks = header_str.split('$')
             self.count = int(toks[0][len('header'):])
@@ -76,7 +76,7 @@ class page:
             toks = record_str.split('$')
             if toks[attr_numb].strip() == key.strip():
                 self.lengths[i] = -1
-                print(self.page_str.split('#')[0])
+                # print(self.page_str.split('#')[0])
                 pos = len('header???$?????$???$') + 8 * i + 4
                 self.page_str = self.put_to_string(self.page_str, pos, self.add_spaces_to_size(str(-1), 3))
                 return record_str
@@ -106,7 +106,7 @@ class page:
         self.page_str = self.put_to_string(self.page_str, pos, self.add_spaces_to_size(str(d), 3))
 
     def get_available_space(self):
-        sum = 100
+        sum = 110
         for length in self.lengths:
             if (length != -1):
                 sum += length
@@ -123,5 +123,5 @@ class page:
         self.page_offset = offset
         f = open(filename, 'r+')
         f.seek(offset)
-        f.write(self.add_spaces_to_size(self.page_str, 500))
+        f.write(self.add_spaces_to_size(self.page_str, self.total_space))
         f.close()

@@ -12,6 +12,7 @@ class hash_db:
         self.type = type
         self.counter = 0
         self.size = 0
+        self.m = {}
 
     def my_hash(self, a_str):
         a_str = str(a_str)
@@ -49,7 +50,7 @@ class hash_db:
                         p2.insert(entity)
                     else:
                         p1.insert(entity)
-                if p1.count == 0 or p2.count == 0 or p1.end_pointer > 500 or p2.end_pointer > 500:
+                if p1.count == 0 or p2.count == 0 or p1.end_pointer > p1.total_space or p2.end_pointer > p2.total_space:
                     print('oops len = ', len(self.pp), ' gd = ', self.gd)
                     if first:
                         p.d += 1
@@ -71,25 +72,27 @@ class hash_db:
             for i, x in enumerate(self.pp):
                 if x == p.page_offset:
                     if (i >> p.d) & 1 == 1:
-                        self.pp[i] = self.counter*500
+                        self.pp[i] = self.counter*p.total_space
                     else:
                         self.pp[i] = p.page_offset
             p1.set_doubling(p.d + 1)
             p2.set_doubling(p1.d)
 
             p1.store(self.filename, p.page_offset)
-            p2.store(self.filename, self.counter*500)
+            p2.store(self.filename, self.counter*p.total_space)
 
-            # p1 = page(page_offset=p.page_offset, filename=self.filename)
-            # p2 = page(page_offset=self.counter*500, filename=self.filename)
-            # if p1.end_pointer > 500 or p2.end_pointer > 500:
-            #     pass
         else:
             p.insert(v)
             p.store(self.filename, p.page_offset)
+
         # if self.check() == False:
         #     pass
         self.size += 1
+
+    def remove(self, key, attr_number):
+        p = self.get_page(key)
+        print(p.page_offset)
+        self.size -= 1
 
     def check(self):
         f = open(self.filename, 'r')
@@ -97,7 +100,7 @@ class hash_db:
             f.seek(offset)
             f.read(len('header???$'))
             end_pointer = int(f.read(3))
-            if end_pointer > 500:
+            if end_pointer > 1000:
                 f.close()
                 return False
         f.close()
