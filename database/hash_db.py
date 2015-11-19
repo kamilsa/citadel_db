@@ -2,7 +2,7 @@ import hashlib
 import os
 import pickle
 from mx.BeeBase import BeeDict
-from database.page import page
+from database.ipage import ipage
 
 __author__ = 'kamil'
 
@@ -67,7 +67,7 @@ class hash_db:
         h = self.my_hash(k)
         # h = hash(k)
         offset = self.pp[h & ((1 << self.gd) - 1)]
-        return page(offset, self.filename)
+        return ipage(offset, self.filename)
 
     def put(self, k, v):
         for attr, key_size in zip(self.index_attrs, self.key_sizes):
@@ -81,10 +81,11 @@ class hash_db:
             self.pp = self.pp + self.pp
             self.gd += 1
         if p.is_fit(v) == False and p.d < self.gd:
-            p.insert(v)
-            p1 = page()
-            p2 = page()
+            # p.insert(v)
+            p1 = ipage()
+            p2 = ipage()
             items = p.items()
+            items.append(v.get_string())
             first = True
             while True:
                 for record_str in items:
@@ -101,8 +102,8 @@ class hash_db:
                     print('oops len = ', len(self.pp), ' gd = ', self.gd)
                     if first:
                         p.d += 1
-                        p1 = page()
-                        p2 = page()
+                        p1 = ipage()
+                        p2 = ipage()
                         if p.d == self.gd:
                             first = False
                     else:
@@ -110,8 +111,8 @@ class hash_db:
                         p.d = self.gd
                         self.pp *= 2
                         self.gd += 1
-                        p1 = page()
-                        p2 = page()
+                        p1 = ipage()
+                        p2 = ipage()
                 else:
                     break
 

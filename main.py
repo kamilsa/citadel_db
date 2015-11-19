@@ -152,6 +152,7 @@ def tree_test():
 def db_test():
     print 'create database with capacity 100000 test is started..\n'
     open(os.getcwd() + '/storage/student.txt', 'wb').close()
+    open(os.getcwd() + '/times.txt', 'wb').close()
     db = hash_db(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
     # studs = get_shuffled_dataset()
 
@@ -247,29 +248,29 @@ def plot():
         line = f.readline()
     f.close()
 
-    lr = LinearRegression()
+    # lr = LinearRegression()
 
-    np_xx = np.array(xx[::10])
-    np_yy = np.array(yy[::10])
-    lr.fit(np_xx.reshape(1,len(np_xx)) ,np_yy.reshape(1, len(np_yy)))
+    # np_xx = np.array(xx[::10])
+    # np_yy = np.array(yy[::10])
+    # lr.fit(np_xx.reshape(1,len(np_xx)) ,np_yy.reshape(1, len(np_yy)))
 
-    print lr.coef_
-    exit()
+    # print lr.coef_
+    # exit()
 
     # x = np.linspace(0, 2 * np.pi, 50)
     # y = np.sin(x)
-    x = np_xx
-    y = lr.predict(x)
+    # x = np_xx
+    # y = lr.predict(x)
     # y2 = y + 0.1 * np.random.normal(size=x.shape)
 
     fig, ax = plt.subplots()
-    ax.plot(x, y[0], 'r-')
+    # ax.plot(x, y[0], 'r-')
     # ax.plot(x, y2, 'ro')
     ax.plot(xx[::100], yy[::100], 'ro', markersize=1)
 
 
     # set ticks and tick labels
-    # ax.set_xlim((0, 2 * np.pi))
+    ax.set_xlim((0, 2 * np.pi))
     max_y = 0.0264
     ax.set_xlim((0, len(xx[:100000])))
     ax.set_xticks(xx[:100000:20000])
@@ -311,10 +312,10 @@ def task_b_tree():
 # generate_random_million()
 # plot()
 # generate_million()
-# db_test()
+db_test()
 # db_load_test()
 # page_test()
-page_pair_test()
+# page_pair_test()
 # tree_test()
 
 # task_b_tree()

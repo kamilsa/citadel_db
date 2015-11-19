@@ -81,8 +81,8 @@ class ipage:
         res = []
         prev = self.header_offset
         for length in self.lengths:
-            res.append(self.page_str[prev:prev + length])
-            prev += length
+            res.append(self.page_str[prev-length:prev])
+            prev -= length
         return res
 
     def set_doubling(self, d):
@@ -95,12 +95,11 @@ class ipage:
             return 999999
         res = 0
         toks = self.page_str.split('#')
-        count = toks[1].find('$') - 2
+        count = self.end_pointer - len(toks[0]) - 12
         res += count
         return res
 
     def is_fit(self, entity):
-        print self.get_available_space()
         if self.get_available_space() - len(entity.get_string()) >= 0:
             return True
         else:
