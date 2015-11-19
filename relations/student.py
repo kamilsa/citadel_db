@@ -5,6 +5,8 @@ class of entity student
 """
 class student:
 
+    __name__ = 'student'
+
     def __init__(self, id = 0, name = "", email = "", address = "", to_parse = None):
         if to_parse == None:
             self.attrs = {}

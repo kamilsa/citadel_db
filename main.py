@@ -1,5 +1,6 @@
-import faker
-import names
+# import faker
+# import names
+import os
 from database.btrees import *
 from database.hash_db import hash_db
 from database.page import page
@@ -7,9 +8,9 @@ from relations.student import student
 import hashlib
 import pickle
 from Profiler import Profiler
-import numpy as np
 import matplotlib.pyplot as plt
-# from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
 __author__ = 'kamil'
 
@@ -36,6 +37,7 @@ def generate_million():
         f.write(to_ins)
     f.close()
 
+
 def generate_random_million():
     lines = []
     f = open('million.txt', 'r')
@@ -50,6 +52,7 @@ def generate_random_million():
     f.writelines(lines)
     f.close()
 
+
 def get_shuffled_million():
     filename = 'rand_million.txt'
     f = open(filename, 'r')
@@ -62,6 +65,7 @@ def get_shuffled_million():
         line = f.readline()
     f.close()
     return studs
+
 
 def get_dataset():
     filename = 'to_put.txt'
@@ -107,39 +111,80 @@ def generate_random_dataset():
 
 
 def page_test():
-    # studs = get_dataset()
-    # p = page()
-    # for stud in studs[0:10]:
-    #     p.insert(stud)
-    #     p.store('page.txt', 0)
-    p = page(filename='student.txt', page_offset=0)
-    for item in p.items():
-        stud = student(to_parse=item)
-        print(stud.attrs)
+    studs = get_dataset()
+    p = page()
+    for stud in studs[0:10]:
+        p.insert(stud)
+        p.store('page.txt', 0)
+
+    # p = page(filename='student.txt', page_offset=0)
+    # for item in p.items():
+    #     stud = student(to_parse=item)
+    #     print(stud.attrs)
 
 
 def tree_test():
-    btree = BPlusTree(4)
-    for i in range(1000):
-        btree.insert(i, i)
+    from mx.BeeBase import BeeDict
+    # Here is a very simple file based string dictionary:
+    # d = BeeDict.BeeStringDict('storage/BeeStringDict.example', keysize=26)
+    # studs = get_shuffled_million()
+    # i = 0
+    # max = ''
+    # for stud in studs[:100000]:
+    #     with Profiler() as p:
+    #         d[stud.attrs['name']] = stud.get_string()
+    #         i += 1
+    #         d.commit()
+    #     if i % 5000 == 0:
+    #         print('#', i)
+    # d.close()
+
+    d = BeeDict.BeeStringDict('storage/BeeStringDict.example', keysize=26)
+    martha = d.cursor(key='Martha Morrow')
+    print(martha.next())
+    # print(len(d))
+    # print(d['Martha Morrow'])
+    print(martha.key, d[martha.key])
 
 
 def db_test():
-    open('student.txt', 'w').close()
-    db = hash_db(filename='student.txt', type=student)
+    print 'create database with capacity 100000 test is started..\n'
+    open(os.getcwd() + '/storage/student.txt', 'wb').close()
+    db = hash_db(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
     # studs = get_shuffled_dataset()
+
+    print('loading dataset')
     studs = get_shuffled_million()
     i = 0
-    for stud in studs:
+    for stud in studs[:1000]:
         with Profiler() as p:
             db.put(stud.get_key(), stud)
             i += 1
-            print('#', i)
-    pickle.dump(db, open('db_meta.pickle', 'wb'))
+            if i % 50 == 0:
+                print('#', i)
+    # print(db.get('581200', 1))
+    # print(db.trees['name']['Matthew Cervantes'])
+    db.save()
 
 
-    # db = pickle.load(open('db_meta.pickle', 'rb'))
-    # db.remove('2', 1)
+def db_load_test():
+    print 'load test is started..\n'
+    db = hash_db(type=student, from_dump=True)
+    # print student(db.get('581200', 1)).attrs
+    print 'test get student with id = 581200..\n'
+    print(student(to_parse=db.get('581200', 1)))
+    print 'test neighbours of Matthew Cervantes..\n'
+    nbrs = db.neighbours('name', 'Matthew Cervantes', 10)
+    for nbr in nbrs:
+        print nbr.attrs
+    print 'test update Matthew Cervantes to Kamil..\n'
+    print(student(to_parse=db.get('581200', 1)).attrs)
+    db.update('581200', 1, {'name': 'Kamil'})
+    print(student(to_parse=db.get('581200', 1)).attrs)
+    print 'test remove Kamil by his id..\n'
+    db.remove('581200', 1)
+    if db.get('581200', 1) == None:
+        print('Kamil is removed!')
 
 
 def my_hash(a_str):
@@ -164,30 +209,37 @@ def plot():
         line = f.readline()
     f.close()
 
-    # lr = LinearRegression()
-    # lr.fit(xx,yy)
+    lr = LinearRegression()
+
+    np_xx = np.array(xx[::10])
+    np_yy = np.array(yy[::10])
+    lr.fit(np_xx.reshape(1,len(np_xx)) ,np_yy.reshape(1, len(np_yy)))
+
+    print lr.coef_
+    exit()
 
     # x = np.linspace(0, 2 * np.pi, 50)
     # y = np.sin(x)
-    # x = xx[::500]
-    # y = lr.predict(x)
+    x = np_xx
+    y = lr.predict(x)
     # y2 = y + 0.1 * np.random.normal(size=x.shape)
 
     fig, ax = plt.subplots()
-    # ax.plot(x, y, 'k--')
+    ax.plot(x, y[0], 'r-')
     # ax.plot(x, y2, 'ro')
-    ax.plot(xx, yy, 'ro', markersize = 1)
+    ax.plot(xx[::100], yy[::100], 'ro', markersize=1)
 
 
     # set ticks and tick labels
     # ax.set_xlim((0, 2 * np.pi))
-    ax.set_xlim((0, len(xx)))
-    ax.set_xticks(xx[::20000])
+    max_y = 0.0264
+    ax.set_xlim((0, len(xx[:100000])))
+    ax.set_xticks(xx[:100000:20000])
     ax.set_xticklabels(xx[::20000])
     # ax.set_ylim((-1.5, 1.5))
     ax.set_ylim((0, max_y))
-    ax.set_yticks([0, max_y/3, 2*max_y/3, max_y])
-    ax.set_yticklabels([0, max_y/3, 2*max_y/3, max_y])
+    ax.set_yticks([0, max_y / 3, 2 * max_y / 3, max_y])
+    ax.set_yticklabels([0, max_y / 3, 2 * max_y / 3, max_y])
 
     # Only draw spine between the y-ticks
     ax.spines['left'].set_bounds(-1, 1)
@@ -201,8 +253,29 @@ def plot():
     plt.show()
 
 
+def task_b_tree():
+    a = 'kamilSALAKHIEV'
+    tree = BPlusTree(3)
+    a = [53, 57, 59, 73, 95, 51, 55, 64, 75, 74, 63, 61, 58, 69, 54, 81, 85, 106, 110, 99, 77, 114, 23]
+    b = [56,101,91,92,93,96,94,90,98,100,20,10,40]
+    a.sort()
+    # tree.insert(56)
+    for i in b:
+        tree[i] = i
+    for i in b:
+        tree[i] = i
+    for i in 'kamilSALAKHIEV':
+        tree[ord(i)] = ord(i)
+    #
+    print(tree)
+
+
 # generate_random_million()
-plot()
+# plot()
 # generate_million()
 # db_test()
-# page_test()
+# db_load_test()
+page_test()
+# tree_test()
+
+# task_b_tree()
