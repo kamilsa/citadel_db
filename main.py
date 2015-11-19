@@ -4,6 +4,8 @@ import os
 from database.btrees import *
 from database.hash_db import hash_db
 from database.page import page
+from database.ipage import ipage
+from relations.pair import pair
 from relations.student import student
 import hashlib
 import pickle
@@ -166,6 +168,42 @@ def db_test():
     # print(db.trees['name']['Matthew Cervantes'])
     db.save()
 
+def db_pair_test():
+    print 'create database with capacity 100000 test is started..\n'
+    open(os.getcwd() + '/storage/student.txt', 'wb').close()
+    db = hash_db(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
+    # studs = get_shuffled_dataset()
+
+    print('loading dataset')
+    pairs = []
+    size = 1000
+    for i in range(size):
+        p = pair(id = i, id1 = i, id2 = i)
+        pairs.append(p)
+    i = 0
+    for p in pairs:
+        with Profiler() as p:
+            db.put(p.get_key(), p)
+            i += 1
+            if i % 50 == 0:
+                print('#', i)
+    # print(db.get('581200', 1))
+    # print(db.trees['name']['Matthew Cervantes'])
+    db.save()
+
+def page_pair_test():
+    pairs = []
+    size = 10000
+    for i in range(size):
+        p = pair(id = i, id1 = i, id2 = i)
+        pairs.append(p)
+    p = ipage()
+    for pa in pairs:
+        if not p.is_fit(pa):
+            break
+        p.insert(pa)
+        p.store('page.txt', 0)
+    print(p.get("100", 1))
 
 def db_load_test():
     print 'load test is started..\n'
@@ -275,7 +313,8 @@ def task_b_tree():
 # generate_million()
 # db_test()
 # db_load_test()
-page_test()
+# page_test()
+page_pair_test()
 # tree_test()
 
 # task_b_tree()
