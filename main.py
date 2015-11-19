@@ -114,10 +114,18 @@ def generate_random_dataset():
 
 def page_test():
     studs = get_dataset()
-    p = page()
+    p = ipage()
+    open('page.txt', 'w').close()
+    from mx.BeeBase import BeeDict
+    tree = BeeDict.BeeStringDict(os.getcwd() + '/storage/' + student.__name__ + 'name',
+                                                 keysize=10)
+
     for stud in studs[0:10]:
         p.insert(stud)
         p.store('page.txt', 0)
+    p.store_to_tree(tree, student, 'page.txt')
+    print (tree['2'])
+    tree.close()
 
     # p = page(filename='student.txt', page_offset=0)
     # for item in p.items():
@@ -312,9 +320,9 @@ def task_b_tree():
 # generate_random_million()
 # plot()
 # generate_million()
-db_test()
+# db_test()
 # db_load_test()
-# page_test()
+page_test()
 # page_pair_test()
 # tree_test()
 

@@ -63,14 +63,14 @@ class ipage:
         pos = len('header???$')
         self.page_str = self.put_to_string(self.page_str, pos, self.add_spaces_to_size(str(self.end_pointer), 5))
 
-        self.page_str = self.put_to_string(self.page_str, old_end_pointer-len(ent_string), ent_string)
+        self.page_str = self.put_to_string(self.page_str, old_end_pointer - len(ent_string), ent_string)
 
         # print(self.page_str)
 
     def get(self, key, attr_numb):
         prev = self.header_offset
         for length in self.lengths:
-            record_str = self.page_str[prev-length:prev]
+            record_str = self.page_str[prev - length:prev]
             toks = record_str.split('$')
             if toks[attr_numb].strip() == key.strip():
                 return record_str
@@ -81,7 +81,7 @@ class ipage:
         res = []
         prev = self.header_offset
         for length in self.lengths:
-            res.append(self.page_str[prev-length:prev])
+            res.append(self.page_str[prev - length:prev])
             prev -= length
         return res
 
@@ -111,3 +111,11 @@ class ipage:
         f.seek(offset)
         f.write(self.page_str)
         f.close()
+
+    def store_to_tree(self, tree, entity, filename):
+        # print zip(self.lengths, self.offsets)
+        for item, length, offset in zip(self.items(), self.lengths, self.offsets):
+            carriage = self.page_offset + offset
+            ent = entity(to_parse=item)
+            tree[ent.get_key()] = filename + ',' + str(carriage + length) + ',' + str(length)
+        tree.commit()
