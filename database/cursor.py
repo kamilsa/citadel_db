@@ -43,7 +43,10 @@ class cursor:
                 self.do_next_page = True
                 self.curr_iter = 0
             self.iter += 1
+            attrs = self.type(to_parse=item).attrs
+            tuple(attrs[k] for k in attrs)
             return self.type(to_parse=item).attrs
+            # return tuple(attrs[k] for k in attrs)
         else:  # so, we iterate using b_tree index on field "on_field"
             if self.do_next_set:
                 self.tree_cursor.next()

@@ -1,6 +1,5 @@
-storage
-million.txt
-rand_million.txt
-student.txt
-times.txt
-to_put.txt
+storage/student.txt
+storage/studentname.dat
+storage/studentname.idx
+/storage/student/dumb.p
+.idea

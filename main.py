@@ -47,13 +47,13 @@ def generate_random_million():
         line = f.readline()
     f.close()
     random.shuffle(lines)
-    filename = 'rand_million.txt'
+    filename = 'rand_million_students.txt'
     f = open(filename, 'w')
     f.writelines(lines)
     f.close()
 
 def get_shuffled_million():
-    filename = 'rand_million.txt'
+    filename = 'rand_million_students.txt'
     f = open(filename, 'r')
     line = f.readline()
     studs = []
@@ -231,9 +231,9 @@ def cursor_test():
     from database.cursor import cursor
 
     db = hash_db(type=student, from_dump=True)
-    # c = cursor(db=db, filename=db.filename)
+    c = cursor(db=db, filename=db.filename)
     # c = select_cursor(db=db,filename=db.filename, on_field='name', greater_than=None, less_than="B")
-    c = project_cursor(db=db,filename=db.filename, fields={'name', 'email'}, ordered_on='name')
+    # c = project_cursor(db=db,filename=db.filename, fields={'name', 'email'}, ordered_on='name')
     while c.has_next():
         print c.next()
 
