@@ -38,16 +38,8 @@ class employee:
     """
 
     def get_string(self):
-        id_offset = 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1
-        name_offset = id_offset + 1 + len(str(self.attrs['id^']))  # 2 symbols or that
-        email_offset = name_offset + 1 + len(self.attrs['name'])
-        address_offset = email_offset + 1 + len(self.attrs['designation'])
         res = ''
         res += self.add_spaces_to_size(str(1), 2) + '$'
-        # res += self.add_spaces_to_size(str(id_offset),2) + '$'
-        # res += self.add_spaces_to_size(str(name_offset),2) + '$'
-        # res += self.add_spaces_to_size(str(email_offset),2) + '$'
-        # res += self.add_spaces_to_size(str(address_offset),2) + '$'
         res += str(self.attrs['id^']) + '$'
         res += self.attrs['name'] + '$'
         res += self.attrs['designation'] + '$'

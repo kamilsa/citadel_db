@@ -1,15 +1,16 @@
 __author__ = 'kamil'
 
+page_size = 4000
 
 class ipage:
     def __init__(self, page_offset=None, filename=None):
         self.count = 0  # number of records
-        self.total_space = 4000
+        self.total_space = page_size
         self.occupied_space = 0
         self.lengths = []
         self.offsets = []
         self.page_str = self.add_spaces_to_size('header0  $4000 $0  $#', 4000)
-        self.end_pointer = 4000
+        self.end_pointer = page_size
         self.header_offset = len(self.page_str)
         self.d = 0
         self.page_offset = page_offset
@@ -112,10 +113,12 @@ class ipage:
         f.write(self.page_str)
         f.close()
 
-    def store_to_tree(self, tree, entity, filename):
+    def store_to_tree(self, tree, entity, attr_index, filename):
         # print zip(self.lengths, self.offsets)
         for item, length, offset in zip(self.items(), self.lengths, self.offsets):
             carriage = self.page_offset + offset
             ent = entity(to_parse=item)
-            tree[ent.get_key()] = filename + ',' + str(carriage + length) + ',' + str(length)
+            if tree.get(ent.attrs[attr_index]) is None:
+                tree[ent.attrs[attr_index]] = set()
+            tree[ent.attrs[attr_index]].add(filename + ',' + str(carriage - length) + ',' + str(length))
         tree.commit()

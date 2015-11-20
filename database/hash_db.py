@@ -36,7 +36,7 @@ class hash_db:
             self.trees = {}
             for index_attr, key_size in zip(self.index_attrs, self.key_sizes):
                 tree = BeeDict.BeeStringDict(os.getcwd() + '/storage/' + type(type).__name__ + index_attr,
-                                                 keysize=key_size)
+                                             keysize=key_size)
                 # tree.close()
                 self.trees[index_attr] = tree
         else:
@@ -70,12 +70,6 @@ class hash_db:
         return ipage(offset, self.filename)
 
     def put(self, k, v):
-        for attr, key_size in zip(self.index_attrs, self.key_sizes):
-            tree = self.trees[attr]
-            tree[v.attrs[attr]] = v.get_string()
-
-            tree.commit()
-
         p = self.get_page(k)
         if p.is_fit(v) == False and p.d == self.gd:
             self.pp = self.pp + self.pp
@@ -137,8 +131,21 @@ class hash_db:
         #     pass
         self.size += 1
 
+    def b_index(self):
+        visited = set()
+        for p in self.pp:
+            if p not in visited:
+                visited.add(p)
+                page = ipage(page_offset=p, filename=self.filename)
+                for attr, key_size in zip(self.index_attrs, self.key_sizes):
+                    tree = self.trees[attr]
+                    page.store_to_tree(tree, self.type, attr, self.filename)
+            else:
+                continue
+        visited.clear()
+
     def remove(self, key, attr_number):
-        stud = self.type(to_parse = self.get(key, attr_number))
+        stud = self.type(to_parse=self.get(key, attr_number))
         for attr, key_size in zip(self.index_attrs, self.key_sizes):
             tree = self.trees[attr]
             print 'here', stud.attrs
@@ -154,7 +161,7 @@ class hash_db:
             if '^' in a_key:
                 print "You cannot update key!"
                 return
-        record = self.type(to_parse = self.get(key, attr_number))
+        record = self.type(to_parse=self.get(key, attr_number))
         self.remove(key, attr_number)
         for a_key, value in zip(up_fields.keys(), up_fields.values()):
             record.attrs[a_key] = value
@@ -195,16 +202,16 @@ class hash_db:
             c.key_sizes = self.key_sizes
         pickle.dump(c, open(path + 'dumb.p', 'wb'))
 
-    def neighbours(self, key_name, key, n, inclusive = True):
+    def neighbours(self, key_name, key, n, inclusive=True):
         tree = self.trees[key_name]
-        curr = tree.cursor(key = key)
+        curr = tree.cursor(key=key)
         res = []
         if inclusive:
-            res.append(self.type(to_parse = tree[curr.key]))
+            res.append(self.type(to_parse=tree[curr.key]))
         i = 0
         while i < n:
             if not curr.next():
                 break
-            res.append(self.type(to_parse = tree[curr.key]))
+            res.append(self.type(to_parse=tree[curr.key]))
             i += 1
         return res

@@ -3,11 +3,12 @@ __author__ = 'kamil'
 """
 class of entity student
 """
-class student:
 
+
+class student:
     __name__ = 'student'
 
-    def __init__(self, id = 0, name = "", email = "", address = "", to_parse = None):
+    def __init__(self, id=0, name="", email="", address="", to_parse=None):
         if to_parse == None:
             self.attrs = {}
             self.attrs['id^'] = id
@@ -22,10 +23,11 @@ class student:
             self.attrs['name'] = toks[2]
             self.attrs['email'] = toks[3]
             self.attrs['address'] = toks[4]
+
     # returns version of string with added spaces
     def add_spaces_to_size(self, string, size):
         res = string
-        for i in range(0, size-len(string)):
+        for i in range(0, size - len(string)):
             res += ' '
         return res
 
@@ -34,9 +36,10 @@ class student:
     <number of key attribute> $ <id offset> $ <name offset> $ <email offset> $ <address offset> $
     <id> $ <name> $ <email> $ <address>
     """
+
     def get_string(self):
         id_offset = 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1
-        name_offset = id_offset + 1 + len(str(self.attrs['id^'])) # 2 symbols or that
+        name_offset = id_offset + 1 + len(str(self.attrs['id^']))  # 2 symbols or that
         email_offset = name_offset + 1 + len(self.attrs['name'])
         address_offset = email_offset + 1 + len(self.attrs['email'])
         res = ''

@@ -2,6 +2,7 @@
 # import names
 import os
 from database.btrees import *
+from database.cursor import select_cursor, project_cursor
 from database.hash_db import hash_db
 from database.page import page
 from database.ipage import ipage
@@ -16,7 +17,6 @@ import numpy as np
 
 __author__ = 'kamil'
 
-
 def get_random_student(id):
     fake = faker.Faker()
     name = names.get_full_name()
@@ -24,7 +24,6 @@ def get_random_student(id):
     email = first_last[0][0] + '.' + first_last[1] + '@innopolis.ru'
     address = fake.address().replace('\n', ' ')
     return student(id, name, email, address)
-
 
 def generate_million():
     filename = 'million.txt'
@@ -38,7 +37,6 @@ def generate_million():
             'email'] + '\n'
         f.write(to_ins)
     f.close()
-
 
 def generate_random_million():
     lines = []
@@ -54,7 +52,6 @@ def generate_random_million():
     f.writelines(lines)
     f.close()
 
-
 def get_shuffled_million():
     filename = 'rand_million.txt'
     f = open(filename, 'r')
@@ -67,7 +64,6 @@ def get_shuffled_million():
         line = f.readline()
     f.close()
     return studs
-
 
 def get_dataset():
     filename = 'to_put.txt'
@@ -82,7 +78,6 @@ def get_dataset():
     f.close()
     return studs
 
-
 def get_shuffled_dataset():
     filename = 'rand_to_put.txt'
     f = open(filename, 'r')
@@ -95,7 +90,6 @@ def get_shuffled_dataset():
         line = f.readline()
     f.close()
     return studs
-
 
 def generate_random_dataset():
     lines = []
@@ -111,27 +105,25 @@ def generate_random_dataset():
     f.writelines(lines)
     f.close()
 
-
 def page_test():
     studs = get_dataset()
     p = ipage()
     open('page.txt', 'w').close()
     from mx.BeeBase import BeeDict
     tree = BeeDict.BeeStringDict(os.getcwd() + '/storage/' + student.__name__ + 'name',
-                                                 keysize=10)
+                                                 keysize=256)
 
     for stud in studs[0:10]:
         p.insert(stud)
         p.store('page.txt', 0)
-    p.store_to_tree(tree, student, 'page.txt')
-    print (tree['2'])
+    p.store_to_tree(tree, student, 'name', 'page.txt')
+    print (zip(tree.keys(), tree.values()))
     tree.close()
 
     # p = page(filename='student.txt', page_offset=0)
     # for item in p.items():
     #     stud = student(to_parse=item)
     #     print(stud.attrs)
-
 
 def tree_test():
     from mx.BeeBase import BeeDict
@@ -156,7 +148,6 @@ def tree_test():
     # print(d['Martha Morrow'])
     print(martha.key, d[martha.key])
 
-
 def db_test():
     print 'create database with capacity 100000 test is started..\n'
     open(os.getcwd() + '/storage/student.txt', 'wb').close()
@@ -167,12 +158,15 @@ def db_test():
     print('loading dataset')
     studs = get_shuffled_million()
     i = 0
-    for stud in studs[:1000]:
+    for stud in studs[:10000]:
         with Profiler() as p:
             db.put(stud.get_key(), stud)
             i += 1
             if i % 50 == 0:
                 print('#', i)
+    db.b_index()
+    for index in db.index_attrs:
+        tree = db.trees[index]
     # print(db.get('581200', 1))
     # print(db.trees['name']['Matthew Cervantes'])
     db.save()
@@ -233,6 +227,15 @@ def db_load_test():
     if db.get('581200', 1) == None:
         print('Kamil is removed!')
 
+def cursor_test():
+    from database.cursor import cursor
+
+    db = hash_db(type=student, from_dump=True)
+    # c = cursor(db=db, filename=db.filename)
+    # c = select_cursor(db=db,filename=db.filename, on_field='name', greater_than=None, less_than="B")
+    c = project_cursor(db=db,filename=db.filename, fields={'name', 'email'}, ordered_on='name')
+    while c.has_next():
+        print c.next()
 
 def my_hash(a_str):
     a_str = str(a_str)
@@ -316,14 +319,12 @@ def task_b_tree():
     #
     print(tree)
 
-
 # generate_random_million()
 # plot()
 # generate_million()
 # db_test()
 # db_load_test()
-page_test()
+# page_test()
 # page_pair_test()
 # tree_test()
-
-# task_b_tree()
+cursor_test()
