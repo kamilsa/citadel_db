@@ -1,3 +1,4 @@
+pyparsing
 egenix-mx-base==3.2.9
 Faker==0.0.4
 names==0.3.0
