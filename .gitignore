@@ -6,3 +6,8 @@ storage/studentname.idx
 .idea/workspace.xml
 million.txt
 rand_million_students.txt
+*.pyc
+
+*.xml
+
+*.xml
