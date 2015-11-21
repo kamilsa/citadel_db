@@ -233,7 +233,8 @@ def cursor_test():
     db = hash_db(type=student, from_dump=True)
     c = cursor(db=db, filename=db.filename)
     # c = select_cursor(db=db,filename=db.filename, on_field='name', greater_than=None, less_than="B")
-    # c = project_cursor(db=db,filename=db.filename, fields={'name', 'email'}, ordered_on='name')
+    # c = project_cursor(db=db,filename=db.filename, fields=['name', 'email'], ordered_on='name')
+    c = select_cursor(filename=db.filename, on_field='name', greater_than='G', less_than='K',on_cursor=c)
     while c.has_next():
         print c.next()
 

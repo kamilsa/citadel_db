@@ -3,5 +3,6 @@ storage/studentname.dat
 storage/studentname.idx
 /storage/student/dumb.p
 .idea
+.idea/workspace.xml
 million.txt
 rand_million_students.txt
