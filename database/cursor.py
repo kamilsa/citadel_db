@@ -1,12 +1,14 @@
 from collections import deque
-from database.ipage import ipage
+#from database.ipage import Ipage
+from database.ipage import Ipage
+
 
 
 class cursor:
     __name__ = 'scan cursor'
 
     def __init__(self, db=None, filename=None, on_field=None):
-        self.type_attrs = db.type.__attrs__
+        self.type_attrs = db.type.__attrs__[:][:]
         self.iter = 0  # to iterate items
         self.size = db.size  # number of items in db
         self.items = set()
@@ -33,7 +35,7 @@ class cursor:
     def next(self):
         if self.on_field is None:  # so, we iterate using hash-index
             if self.do_next_page:
-                curr_page = ipage(page_offset=self.page_offsets.pop(), filename=self.filename)
+                curr_page = Ipage(page_offset=self.page_offsets.pop(), filename=self.filename)
                 self.curr_items = curr_page.items()
                 self.do_next_page = False
             item = self.curr_items[self.curr_iter]
@@ -43,7 +45,7 @@ class cursor:
                 self.curr_iter = 0
             self.iter += 1
             attrs = self.type(to_parse=item).attrs
-            return tuple(attrs[k] for k in self.type.__attrs__)
+            return tuple(attrs[k] for k in self.type.__attrs__[:])
         else:  # so, we iterate using b_tree index on field "on_field"
             if self.do_next_set:
                 self.tree_cursor.next()
@@ -58,7 +60,7 @@ class cursor:
             res = f.read(int(toks[2]))
             f.close()
             ent = self.type(to_parse=res)
-            return tuple(ent.attrs[k] for k in self.type.__attrs__)
+            return tuple(ent.attrs[k] for k in self.type.__attrs__[:])
 
     def has_next(self):
         if self.on_field is None:
@@ -101,7 +103,7 @@ class select_cursor(cursor):
 
     def __init__(self, db=None, filename=None, on_field=None, greater_than=None, less_than=None, on_cursor=None):
         if db is not None:
-            self.type_attrs = db.type.__attrs__  # list of attributes' names
+            self.type_attrs = db.type.__attrs__[:]  # list of attributes' names
         else:
             self.type_attrs = on_cursor.type_attrs
 
@@ -186,11 +188,11 @@ class select_cursor(cursor):
                 res = f.read(int(toks[2]))
                 f.close()
                 ent = self.type(to_parse=res)
-                return tuple(ent.attrs[k] for k in self.type.__attrs__)
+                return tuple(ent.attrs[k] for k in self.type.__attrs__[:])
         elif self.on_cursor is not None:
             if self.on_cursor.on_field is None:  # so, we iterate using hash-index
                 res = None
-                on_field_id = self.type.__attrs__.index(self.on_field)
+                on_field_id = self.type.__attrs__[:].index(self.on_field)
                 while True:
                     res = self.on_cursor.next()
                     if self.less_than > res[on_field_id] > self.greater_than:
@@ -241,7 +243,7 @@ class select_cursor(cursor):
                         self.refresh()
                         return False
                     if tmp_do_next_set:
-                        curr_page = ipage(page_offset=tmp_page_offsets.pop(), filename=self.on_cursor.filename)
+                        curr_page = Ipage(page_offset=tmp_page_offsets.pop(), filename=self.on_cursor.filename)
                         items = curr_page.items()
                         tmp_do_next_set = False
                         tmp_curr_iter = 0
@@ -301,11 +303,15 @@ class project_cursor(cursor):
 
     def __init__(self, db=None, filename=None, fields=None, ordered_on=None, on_cursor=None):
         if db is not None:
-            self.type_attrs = db.type.__attrs__  # list of attributes' names
+            self.type_attrs = db.type.__attrs__[:]  # list of attributes' names
             self.size = db.size  # number of items in db
         else:
-            self.type_attrs = on_cursor.type.__attrs__
+            self.type_attrs = on_cursor.type.__attrs__[:]
             self.size = on_cursor.size
+        if fields is None:
+            fields = self.type_attrs
+            print '1'
+            print self.type_attrs
         self.fields = fields
         self.iter = 0  # to iterate items
         self.ordered_on = ordered_on
@@ -341,7 +347,7 @@ class project_cursor(cursor):
         if self.on_cursor is None:
             if self.ordered_on is None:  # so, we iterate using hash-index
                 if self.do_next_page:
-                    curr_page = ipage(page_offset=self.page_offsets.pop(), filename=self.filename)
+                    curr_page = Ipage(page_offset=self.page_offsets.pop(), filename=self.filename)
                     self.curr_items = curr_page.items()
                     self.do_next_page = False
                 item = self.curr_items[self.curr_iter]
@@ -354,7 +360,7 @@ class project_cursor(cursor):
                 attrs = self.type(to_parse=item).attrs
                 for field in self.fields:
                     res[field] = attrs[field]
-                return res
+                return tuple(res[k] for k in self.fields)
             else:  # so, we iterate using b_tree index on field "on_field"
                 if self.do_next_set:
                     self.tree_cursor.next()

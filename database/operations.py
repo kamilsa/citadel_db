@@ -1,6 +1,6 @@
 # opeations for database
 from database.cursor import cursor, select_cursor, project_cursor
-from database.hash_db import hash_db
+from database.table import Table
 
 
 def scan(db):

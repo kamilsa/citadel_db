@@ -3,17 +3,17 @@
 import os
 from database.btrees import *
 from database.cursor import select_cursor, project_cursor
-from database.hash_db import hash_db
+from database.table import Table
 from database.page import page
-from database.ipage import ipage
+from database.ipage import Ipage
 from relations.pair import pair
 from relations.student import student
 import hashlib
 import pickle
 from Profiler import Profiler
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
+#import matplotlib.pyplot as plt
 import numpy as np
+from driver import  driver
 
 __author__ = 'kamil'
 
@@ -107,7 +107,7 @@ def generate_random_dataset():
 
 def page_test():
     studs = get_dataset()
-    p = ipage()
+    p = Ipage()
     open('page.txt', 'w').close()
     from mx.BeeBase import BeeDict
     tree = BeeDict.BeeStringDict(os.getcwd() + '/storage/' + student.__name__ + 'name',
@@ -152,7 +152,7 @@ def db_test():
     print 'create database with capacity 100000 test is started..\n'
     open(os.getcwd() + '/storage/student.txt', 'wb').close()
     open(os.getcwd() + '/times.txt', 'wb').close()
-    db = hash_db(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
+    db = Table(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
     # studs = get_shuffled_dataset()
 
     print('loading dataset')
@@ -174,7 +174,7 @@ def db_test():
 def db_pair_test():
     print 'create database with capacity 100000 test is started..\n'
     open(os.getcwd() + '/storage/student.txt', 'wb').close()
-    db = hash_db(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
+    db = Table(filename=os.getcwd() + '/storage/student.txt', type=student, index_attrs=['name'], key_sizes=[26])
     # studs = get_shuffled_dataset()
 
     print('loading dataset')
@@ -200,7 +200,7 @@ def page_pair_test():
     for i in range(size):
         p = pair(id = i, id1 = i, id2 = i)
         pairs.append(p)
-    p = ipage()
+    p = Ipage()
     for pa in pairs:
         if not p.is_fit(pa):
             break
@@ -210,7 +210,7 @@ def page_pair_test():
 
 def db_load_test():
     print 'load test is started..\n'
-    db = hash_db(type=student, from_dump=True)
+    db = Table(type=student, from_dump=True)
     # print student(db.get('581200', 1)).attrs
     print 'test get student with id = 581200..\n'
     print(student(to_parse=db.get('581200', 1)))
@@ -230,7 +230,7 @@ def db_load_test():
 def cursor_test():
     from database.cursor import cursor
 
-    db = hash_db(type=student, from_dump=True)
+    db = Table(type=student, from_dump=True)
     c = cursor(db=db, filename=db.filename)
     # c = select_cursor(db=db,filename=db.filename, on_field='name', greater_than=None, less_than="B")
     # c = project_cursor(db=db,filename=db.filename, fields=['name', 'email'], ordered_on='name')
@@ -323,9 +323,22 @@ def task_b_tree():
 # generate_random_million()
 # plot()
 # generate_million()
-# db_test()
-# db_load_test()
+#db_test()
+#db_load_test()
 # page_test()
 # page_pair_test()
 # tree_test()
-cursor_test()
+#cursor_test()
+drv = driver()
+cur = drv.connect()
+curs = cur.cursor()
+curs.execute("SELECT name FroM student WHERE name < \'K\' and name > \'L\' ORDER BY name LIMIT 5;")
+print curs.fetchall()
+curs.execute("SELECT * FroM student LIMIT 4 ORDER BY name;")
+print curs.fetchall()
+
+
+
+
+
+

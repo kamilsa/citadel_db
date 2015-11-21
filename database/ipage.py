@@ -2,7 +2,7 @@ __author__ = 'kamil'
 
 page_size = 4000
 
-class ipage:
+class Ipage:
     def __init__(self, page_offset=None, filename=None):
         self.count = 0  # number of records
         self.total_space = page_size

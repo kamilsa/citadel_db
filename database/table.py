@@ -2,10 +2,10 @@ import hashlib
 import os
 import pickle
 from mx.BeeBase import BeeDict
-from database.ipage import ipage
+from database.ipage import Ipage
 
 __author__ = 'kamil'
-
+__second_author__ = 'bulat'
 
 class container:
     filename = 0
@@ -19,12 +19,13 @@ class container:
     key_sizes = None
 
 
-class hash_db:
+class Table:
     def __init__(self, filename=None, type=None, index_attrs=None, key_sizes=None, from_dump=False):
         if from_dump == True:
             path = os.getcwd() + '/storage/' + type.__name__ + '/'
             c = pickle.load(open(path + 'dumb.p', 'rb'))
             self.filename = c.filename
+            self.name = type.__name__
             self.gd = c.gd
             self.pp = c.pp
             self.type = c.type
@@ -44,6 +45,7 @@ class hash_db:
             self.gd = 0
             self.pp = [0]
             self.type = type
+            self.name = type.__name__
             self.counter = 0
             self.size = 0
             self.m = {}
@@ -57,6 +59,9 @@ class hash_db:
                     # tree.close()
                     self.trees[attr] = tree
 
+    def table_name(self):
+        return self.filename
+
     def my_hash(self, a_str):
         a_str = str(a_str)
         a_str = a_str.encode('utf8')
@@ -67,7 +72,7 @@ class hash_db:
         h = self.my_hash(k)
         # h = hash(k)
         offset = self.pp[h & ((1 << self.gd) - 1)]
-        return ipage(offset, self.filename)
+        return Ipage(offset, self.filename)
 
     def put(self, k, v):
         p = self.get_page(k)
@@ -76,8 +81,8 @@ class hash_db:
             self.gd += 1
         if p.is_fit(v) == False and p.d < self.gd:
             # p.insert(v)
-            p1 = ipage()
-            p2 = ipage()
+            p1 = Ipage()
+            p2 = Ipage()
             items = p.items()
             items.append(v.get_string())
             first = True
@@ -96,8 +101,8 @@ class hash_db:
                     print('oops len = ', len(self.pp), ' gd = ', self.gd)
                     if first:
                         p.d += 1
-                        p1 = ipage()
-                        p2 = ipage()
+                        p1 = Ipage()
+                        p2 = Ipage()
                         if p.d == self.gd:
                             first = False
                     else:
@@ -105,8 +110,8 @@ class hash_db:
                         p.d = self.gd
                         self.pp *= 2
                         self.gd += 1
-                        p1 = ipage()
-                        p2 = ipage()
+                        p1 = Ipage()
+                        p2 = Ipage()
                 else:
                     break
 
@@ -136,7 +141,7 @@ class hash_db:
         for p in self.pp:
             if p not in visited:
                 visited.add(p)
-                page = ipage(page_offset=p, filename=self.filename)
+                page = Ipage(page_offset=p, filename=self.filename)
                 for attr, key_size in zip(self.index_attrs, self.key_sizes):
                     tree = self.trees[attr]
                     page.store_to_tree(tree, self.type, attr, self.filename)

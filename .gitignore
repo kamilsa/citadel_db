@@ -11,3 +11,5 @@ rand_million_students.txt
 *.xml
 
 *.xml
+
+*.pyc
