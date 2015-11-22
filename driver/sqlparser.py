@@ -48,8 +48,13 @@ def _parse(query, db):
             limit_index = int(keywords[limit_index])
 
         where = [token for token in query_tokens.tokens if isinstance(token, Where)]
+        condition = []
+        comparison = []
+        conditon_logic = []
         if len(where) != 0:
             condition = [token for token in where[0].tokens if str(token).upper() != "WHERE" and str(token) != ' ']
+            comparison = [token for token in condition if isinstance(token, Comparison)]
+            conditon_logic = [token for token in condition if not isinstance(token, Comparison)]
         tableIdent = [token for token in query_tokens.tokens[break_index:break_index2] if isinstance(token, Identifier)]
         tableList = [token for token in query_tokens.tokens[break_index:break_index2] if
                      isinstance(token, IdentifierList)]
@@ -103,6 +108,12 @@ def _parse(query, db):
                 else:
                     c = database.cursor.project_cursor(db=local_table, filename=local_table.filename)
 
+                if condition is not None and len(condition) != 0:
+                    for cond in condition:
+                        all_field = str(cond).split()
+                        ident_field = all_field[0]
+                        log_field = all_field[1]
+                        cond_field = all_field[2]
 
             elif len(projections) != 0:
                 local_table = db.tables[table_name]
@@ -115,6 +126,14 @@ def _parse(query, db):
                 else:
                     c = database.cursor.project_cursor(db=local_table, filename=local_table.filename,
                                                        fields=projections)
+
+                if condition is not None and len(condition) != 0:
+                    for cond in condition:
+                        all_field = str(cond).split()
+                        ident_field = all_field[0]
+                        log_field = all_field[1]
+                        cond_field = all_field[2]
+
 
             else:
                 raise (BaseException("Syntax sql error"))
