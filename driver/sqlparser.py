@@ -112,8 +112,6 @@ def _parse(query, db):
                     raise (BaseException("No table named " + table_name))
             print tables
 
-
-
             if len(on_index) > 0:
                 # there is on_index + join:
                 for ind in on_index:
@@ -149,13 +147,36 @@ def _parse(query, db):
                         field2 = ident2[0]
                     print "Second table is ", true_ident2
                     print "Second field if ", field2
+                    local_table1 = db.tables[true_ident1.lower()]
+                    local_table2 = db.tables[true_ident2.lower()]
 
+                    if log_field == '=':
+                         if proj.is_whitespace() or str(proj) == '*' or str(proj).upper() == "FROM":
+                            # No projection - full select
 
-                if log_field == '=':
-                    c = database.cursor.select_cursor(db=local_table, filename=local_table.filename,
-                                                          on_field=ident_field, equal_to=cond_field)
-                else:
-                    raise (BaseException("Wrong condition in joining "))
+                            if condition is not None and len(condition) != 0:
+                                # TODO : Make for all. Now for one condition only
+                                cond = condition[0]
+                                split_field = str(cond).split()
+                                indntity_field = all_field[0]
+                                logic_field = all_field[1]
+                                condition_field = ' '.join(all_field[2:])
+                                if logic_field == '=':
+                                    # TODO : Will not work
+                                    c1 = database.cursor.select_cursor(db=local_table1, filename=local_table1.filename,
+                                                                      on_field=indntity_field, equal_to=condition_field)
+                                    c2 = database.cursor.select_cursor(db=local_table2, filename=local_table2.filename,
+                                                                      on_field=indntity_field, equal_to=condition_field)
+                                else:
+                                    raise (BaseException("Unsupported feature"))
+                            else:
+                                c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename)
+                                c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
+                                c = database.cursor.join_cursor(c1, c2, field1, field2)
+                         else:
+                            raise (BaseException("Unsupported feature jet"))
+                    else:
+                        raise (BaseException("Wrong condition in joining "))
 
         else:
             # Simple select
@@ -227,7 +248,7 @@ def _parse(query, db):
 
             else:
                 raise (BaseException("Syntax sql error"))
-            return [c, limit_index]
+        return [c, limit_index]
 
     elif sql_type == "INSERT":
         pass

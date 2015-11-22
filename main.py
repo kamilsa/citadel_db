@@ -14,6 +14,8 @@ from Profiler import Profiler
 #import matplotlib.pyplot as plt
 import numpy as np
 from driver import  driver
+from database.db_storage import Storage
+
 
 __author__ = 'kamil'
 
@@ -320,6 +322,7 @@ def task_b_tree():
     #
     print(tree)
 
+
 # generate_random_million()
 # plot()
 # generate_million()
@@ -332,10 +335,18 @@ def task_b_tree():
 drv = driver()
 cur = drv.connect()
 curs = cur.cursor()
-curs.execute("SELECT name FroM student WHERE name < \'K\' and name > \'L\' ORDER BY name LIMIT 5;")
+
+curs.execute("SELECT * from student as l1 INNER JOIN student AS l2 ON l1.id^ = l2.id^")
 print curs.fetchall()
-curs.execute("SELECT * FroM student LIMIT 4 ORDER BY name;")
+curs.execute("SELECT * FroM student WHERE name = Aaron Baker ORDER BY name")
 print curs.fetchall()
+#print("Writing to main database file: ")
+#container = Storage()
+#container.open_file('storage/student.txt')
+#container.read(10)
+#container.seek(40000)
+#container.read(10)
+#container.save_all('storage')
 
 
 
