@@ -40,12 +40,22 @@ def _parse(query, db):
         if 'ORDER' in keywords:
             break_index2 = keywords.index('ORDER')
         else:
-            break_index2 = len(keywords) - 1
+            break_index2 = len(keywords)
 
         limit_index = -1
         if 'LIMIT' in keywords:
             limit_index = keywords.index('LIMIT') + 2
             limit_index = int(keywords[limit_index])
+
+        on_index = []
+        index = 0
+        while 'ON' in keywords[index:]:
+            index = keywords[index:].index('ON') + 2 + index
+            print index
+            on_index.append(index)
+
+        print "ON INDEXES ", on_index
+
 
         where = [token for token in query_tokens.tokens if isinstance(token, Where)]
         condition = []
@@ -67,10 +77,13 @@ def _parse(query, db):
         ordList = [token for token in query_tokens.tokens[break_index2:] if isinstance(token, IdentifierList)]
 
         if len(tableList) != 0:
-            tables = [str(i) for i in tableList[0].get_identifiers()]
-        elif len(tableIdent) != 0:
-            tables = [str(i) for i in tableIdent]
-        else:
+            for t in tableList:
+                for k in t.get_identifiers():
+                    tables.append(str(k))
+        if len(tableIdent) != 0:
+            for i in tableIdent:
+                tables.append(str(i))
+        if len(tables) == 0:
             raise (BaseException("No table name identifiers provided! "))
 
         if len(projList) != 0:
@@ -82,12 +95,68 @@ def _parse(query, db):
             ordered = [str(i) for i in ordList[0].get_identifiers()]
         elif len(ordIdent) != 0:
             ordered = [str(i) for i in ordIdent]
+        aliases = {}
 
-        print ordered
+        for ident in tables:
+            poss_tab = str(ident).upper().split(' AS ')
+            if len(poss_tab) > 1:
+                # Can be spited
+                aliases[poss_tab[1]] = poss_tab[0]
+            else:
+                aliases[poss_tab[0]] = poss_tab[0]
 
         if len(tables) > 1:
-            # here goes joins
             print("Processing hash join select")
+            for table_name in aliases.values():
+                if not __table_exists(db, table_name):
+                    raise (BaseException("No table named " + table_name))
+            print tables
+
+
+
+            if len(on_index) > 0:
+                # there is on_index + join:
+                for ind in on_index:
+                    cond = query_tokens.tokens[ind]
+                    all_field = str(cond).upper().split()
+
+                    ident_field = all_field[0]
+                    log_field = all_field[1]
+                    cond_field = ' '.join(all_field[2:])
+                    # --------- First identy
+                    ident1 = ident_field.split('.')
+                    true_ident1 = ''
+                    alias1 = ''
+                    field1 = ''
+                    if len(ident1) > 1:
+                        alias1 = ident1[0]
+                        field1 = ident1[1]
+                        true_ident1 = aliases[alias1]
+                    else:
+                        field1 = ident1[0]
+                    print "First table is ", true_ident1
+                    print "First field if ", field1
+                    # ------ Second identy
+                    ident2 = cond_field.split('.')
+                    true_ident2 = ''
+                    alias2 = ''
+                    field2 = ''
+                    if len(ident2) > 1:
+                        alias2 = ident2[0]
+                        field2 = ident2[1]
+                        true_ident2 = aliases[alias2]
+                    else:
+                        field2 = ident2[0]
+                    print "Second table is ", true_ident2
+                    print "Second field if ", field2
+
+
+                if log_field == '=':
+                    c = database.cursor.select_cursor(db=local_table, filename=local_table.filename,
+                                                          on_field=ident_field, equal_to=cond_field)
+                else:
+                    raise (BaseException("Wrong condition in joining "))
+
         else:
             # Simple select
             print("Simple select")
@@ -102,37 +171,58 @@ def _parse(query, db):
                 #
                 local_table = db.tables[table_name]
                 # c = database.cursor.cursor(db=local_table, filename=local_table.filename)
-                if len(ordered) != 0:
-                    c = database.cursor.project_cursor(db=local_table, filename=local_table.filename,
-                                                       ordered_on=ordered[0])
-                else:
-                    c = database.cursor.project_cursor(db=local_table, filename=local_table.filename)
-
                 if condition is not None and len(condition) != 0:
-                    for cond in condition:
-                        all_field = str(cond).split()
-                        ident_field = all_field[0]
-                        log_field = all_field[1]
-                        cond_field = all_field[2]
+                    # TODO : Make for all. Now for one condition only
+                    cond = condition[0]
+                    all_field = str(cond).split()
+                    ident_field = all_field[0]
+                    log_field = all_field[1]
+                    cond_field = ' '.join(all_field[2:])
+                    if log_field == '=':
+                        c = database.cursor.select_cursor(db=local_table, filename=local_table.filename,
+                                                          on_field=ident_field, equal_to=cond_field)
+                    else:
+                        raise (BaseException("Unsupported feature"))
+                else:
+                    c = database.cursor.cursor(db=local_table, filename=local_table)
+
+                if len(ordered) != 0:
+                    c = database.cursor.project_cursor(filename=local_table.filename,
+                                                       ordered_on=ordered[0], on_cursor=c)
+                else:
+                    c = database.cursor.project_cursor(filename=local_table.filename, on_cursor=c)
+
+
 
             elif len(projections) != 0:
                 local_table = db.tables[table_name]
                 # ordered_on='name'
                 print("Projection select ")
-                if len(ordered) != 0:
-                    c = database.cursor.project_cursor(db=local_table, filename=local_table.filename,
-                                                       fields=projections, ordered_on=ordered[0])
-
-                else:
-                    c = database.cursor.project_cursor(db=local_table, filename=local_table.filename,
-                                                       fields=projections)
-
                 if condition is not None and len(condition) != 0:
-                    for cond in condition:
-                        all_field = str(cond).split()
-                        ident_field = all_field[0]
-                        log_field = all_field[1]
-                        cond_field = all_field[2]
+                    # TODO : Make for all. Now for one condition only
+                    cond = condition[0]
+                    all_field = str(cond).split()
+
+                    ident_field = all_field[0]
+                    log_field = all_field[1]
+                    cond_field = ' '.join(all_field[2:])
+                    if log_field == '=':
+                        c = database.cursor.select_cursor(db=local_table, filename=local_table.filename,
+                                                          on_field=ident_field, equal_to=cond_field)
+                    else:
+                        raise (BaseException("Unsupported feature"))
+                else:
+                    c = database.cursor.cursor(db=local_table, filename=local_table)
+                if len(ordered) != 0:
+                    c = database.cursor.project_cursor(filename=local_table.filename,
+                                                       fields=projections, ordered_on=ordered[0],
+                                                       on_cursor=c)
+                else:
+                    c = database.cursor.project_cursor(filename=local_table.filename,
+                                                       fields=projections,
+                                                       on_cursor=c)
+
+
 
 
             else:

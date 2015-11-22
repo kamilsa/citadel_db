@@ -25,8 +25,3 @@ class driver:
         print("Connected to database ")
         return Connection(self.db)
 
-
-    def execute(self, query):
-        pass
-
-
