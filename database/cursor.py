@@ -1,14 +1,13 @@
 from collections import deque
-#from database.ipage import Ipage
+# from database.ipage import Ipage
 from database.ipage import Ipage
-
 
 
 class cursor:
     __name__ = 'scan cursor'
 
     def __init__(self, db=None, filename=None, on_field=None):
-        self.type_attrs = db.type.__attrs__[:][:]
+        self.type_attrs = db.type.__attrs__[:]
         self.iter = 0  # to iterate items
         self.size = db.size  # number of items in db
         self.items = set()
@@ -101,7 +100,8 @@ class select_cursor(cursor):
     __name__ = 'select_cursor'
     __lastkey = None  # last visited key
 
-    def __init__(self, db=None, filename=None, on_field=None, greater_than=None, less_than=None, equal_to = None, on_cursor=None):
+    def __init__(self, db=None, filename=None, on_field=None, greater_than=None, less_than=None, equal_to=None,
+                 on_cursor=None):
         if db is not None:
             self.type_attrs = db.type.__attrs__[:]  # list of attributes' names
         else:
@@ -116,12 +116,12 @@ class select_cursor(cursor):
             self.size = db.size  # number of items in db
             self.type = db.type
             if on_field is None:  # do scan on key field
-                print "Something tried to create range-query cursor without assigned field"
+                print("Something tried to create range-query cursor without assigned field")
             else:  # do scan on given field(it should have b_index on it)
                 tree = db.trees[on_field]
                 self.tree_cursor = tree.cursor()
                 # define start and end of cursor
-                if equal_to is None: #thus, this is the case of range query
+                if equal_to is None:  # thus, this is the case of range query
                     self.less_than = less_than
                     self.greater_than = greater_than
                     if greater_than is not None:
@@ -136,9 +136,9 @@ class select_cursor(cursor):
                     self.curr_iter = 0
                     self.do_next_set = True
                     self.cur_set = set()
-                else: # case of exact query
+                else:  # case of exact query
                     self.equal_to = equal_to
-                    self.curr_iter=0
+                    self.curr_iter = 0
                     self.do_next_set = True
                     try:
                         self.cur_set = tree[equal_to]
@@ -150,7 +150,7 @@ class select_cursor(cursor):
             self.size = on_cursor.size  # number of items in db
             self.type = on_cursor.type
             if on_field is None:  # do scan on key field
-                print "Something tried to create range-query cursor without assigned field"
+                print("Something tried to create range-query cursor without assigned field")
             else:  # do scan on given field(it should have b_index on it)
                 if self.equal_to is None:
                     tree = self.on_cursor.db.trees[on_field]
@@ -192,7 +192,7 @@ class select_cursor(cursor):
     def next(self):
         if self.on_cursor is None:  # so, we actually do scan
             if self.on_field is None:  # so, we iterate using hash-index
-                print "Something tried to create range-query cursor without assigned field"
+                print("Something tried to create range-query cursor without assigned field")
             else:  # so, we iterate using b_tree index on field "on_field"
                 if self.equal_to is None:
                     if self.do_next_set:
@@ -241,12 +241,12 @@ class select_cursor(cursor):
                 ent = self.type(to_parse=res)
                 return tuple(ent.attrs[k] for k in self.type.__attrs__[:])
         else:
-            print "something went wrong in next in select cursor"
+            print("something went wrong in next in select cursor")
 
     def has_next(self):
         if self.on_cursor is None:
             if self.on_field is None:
-                print "Something tried to create range-query cursor without assigned field"
+                print("Something tried to create range-query cursor without assigned field")
             else:
                 if self.equal_to is None:
                     res = self.tree_cursor.next()
@@ -333,7 +333,7 @@ class select_cursor(cursor):
                 self.cur_set = set()
             else:
                 tree = self.db.trees[self.on_field]
-                self.curr_iter=0
+                self.curr_iter = 0
                 self.do_next_set = True
                 try:
                     self.cur_set = tree[self.equal_to]
@@ -343,7 +343,7 @@ class select_cursor(cursor):
         elif self.db is None and self.on_cursor is not None:
             if self.equal_to is None:
                 if self.on_field is None:  # do scan on key field
-                    print "Something tried to create range-query cursor without assigned field"
+                    print("Something tried to create range-query cursor without assigned field")
                 else:  # do scan on given field(it should have b_index on it)
                     tree = self.on_cursor.db.trees[self.on_field]
                     self.on_cursor.refresh()
@@ -385,8 +385,8 @@ class project_cursor(cursor):
             self.size = on_cursor.size
         if fields is None:
             fields = self.type_attrs
-            print '1'
-            print self.type_attrs
+            # print('1')
+            # print(self.type_attrs)
         self.fields = fields
         self.iter = 0  # to iterate items
         self.ordered_on = ordered_on
@@ -394,9 +394,9 @@ class project_cursor(cursor):
         self.on_cursor = on_cursor
 
         # remove redundant attributes from type_attrs
-        for attr in self.type_attrs:
-            if attr not in fields:
-                self.type_attrs.remove(attr)
+        # for attr in self.type_attrs:
+        #     if attr not in fields:
+        #         self.type_attrs.remove(attr)
 
         if db is not None and on_cursor is None:  # so, we actually do scan
             self.type = db.type
@@ -461,7 +461,7 @@ class project_cursor(cursor):
 
             # remove redundant attributes from result of calling next on given cursor
             for attr in self.on_cursor.type_attrs:
-                if attr in self.type_attrs:
+                if attr in self.fields:
                     tmp.append(self.on_cursor.type_attrs.index(attr))
             return tuple(res[t] for t in tmp)
 
@@ -504,3 +504,97 @@ class project_cursor(cursor):
                 self.cur_set = set()
         else:
             self.on_cursor.refresh()
+
+
+class join_cursor(cursor):
+    class tmp_type:
+        __attrs__ = []
+
+    __name__ = 'join_cursor'
+
+    def __init__(self, cursor1=None, cursor2=None, on_field1=None, on_field2=None):
+        self.size = cursor1.size
+        self.type = self.tmp_type
+        self.cursor1 = cursor1
+        self.cursor2 = cursor2
+        self.type_attrs1 = cursor1.type_attrs[:]
+        self.type_attrs2 = cursor2.type_attrs[:]
+        tmp_type_attr2 = self.type_attrs2[:]
+        tmp_type_attr2.remove(on_field2)
+        self.db = None
+        try:
+            self.db = cursor1.on_cursor.on_cursor.db
+        except:
+            try:
+                self.db = cursor1.on_cursor.db
+            except:
+                try:
+                    self.db = cursor1.db
+                except:
+                    try:
+                        self.db = self.cursor2.on_cursor.on_cursor.db
+                    except:
+                        try:
+                            self.db = self.cursor2.on_cursor.db
+                        except:
+                            try:
+                                self.db = self.cursor2.db
+                            except:
+                                self.db = None
+        if self.db is None:
+            print("I tried but db is still None :(")
+
+        for type_attr in self.cursor1.type_attrs:
+            if type_attr in tmp_type_attr2:
+                index = self.type_attrs1.index(type_attr)
+                self.type_attrs1[index] = self.cursor1.type.__name__ + "." + self.type_attrs1[index]
+
+        for type_attr in tmp_type_attr2:
+            if type_attr in self.cursor1.type_attrs:
+                index = tmp_type_attr2.index(type_attr)
+                tmp_type_attr2[index] = self.cursor2.type.__name__ + "." + tmp_type_attr2[index]
+
+        self.type_attrs = self.type_attrs1[:] + tmp_type_attr2[:]
+        self.type.__attrs__ = self.type_attrs
+
+        self.on_field1 = on_field1
+        self.on_field2 = on_field2
+        self.prev_res = None
+        self.exit = False
+
+    def next(self):
+        val1 = self.cursor1.next()
+        val2 = self.cursor2.next()
+        key1 = val1[self.cursor1.type_attrs.index(self.on_field1)]
+        key2 = val2[self.cursor2.type_attrs.index(self.on_field2)]
+        while True:
+            if not self.cursor1.has_next() or not self.cursor2.has_next():
+                self.exit = True
+                return self.prev_res
+            if key1 < key2:
+                val1 = self.cursor1.next()
+                key1 = val1[self.cursor1.type_attrs.index(self.on_field1)]
+            elif key2 < key1:
+                val2 = self.cursor2.next()
+                key2 = val2[self.cursor2.type_attrs.index(self.on_field2)]
+            else:
+                break
+        arr_val1 = [t for t in val1]
+        arr_val2 = [t for t in val2]
+        del arr_val2[self.cursor2.type_attrs.index(self.on_field2)]
+        res_tuple = tuple(x for x in arr_val1 + arr_val2)
+        self.prev_res = res_tuple
+        return res_tuple
+
+    def has_next(self):
+        if self.exit:
+            self.refresh()
+            return False
+        if not self.cursor1.has_next() or not self.cursor2.has_next():
+            return False
+        else:
+            return True
+
+    def refresh(self):
+        self.cursor1.refresh()
+        self.cursor2.refresh()
