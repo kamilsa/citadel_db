@@ -3,6 +3,8 @@ import os
 import pickle
 from mx.BeeBase import BeeDict
 from database.ipage import Ipage
+from db_storage import Storage
+import StringIO
 
 __author__ = 'kamil'
 __second_author__ = 'bulat'
@@ -22,8 +24,13 @@ class container:
 class Table:
     def __init__(self, filename=None, type=None, index_attrs=None, key_sizes=None, from_dump=False):
         if from_dump == True:
-            path = os.getcwd() + '/storage/' + type.__name__ + '/'
-            c = pickle.load(open(path + 'dumb.p', 'rb'))
+            #
+            path = os.getcwd() + '/storage/' + type.__name__ + '/' + 'dumb.p'
+            #storage = Storage()
+            #storage.open_file(path)
+            #filetext = storage.current_file.read()
+            #c = pickle.load(StringIO.StringIO(filetext))
+            c = pickle.load(open(path, 'rb'))
             self.filename = c.filename
             self.name = type.__name__
             self.gd = c.gd
@@ -35,6 +42,9 @@ class Table:
             self.index_attrs = c.index_attrs
             self.key_sizes = c.key_sizes
             self.trees = {}
+            print("Extracting ")
+            #storage.extract('storage/' + type.__name__)
+            print("Extracting done ")
             for index_attr, key_size in zip(self.index_attrs, self.key_sizes):
                 tree = BeeDict.BeeStringDict(os.getcwd() + '/storage/' + type(type).__name__ + index_attr,
                                              keysize=key_size)

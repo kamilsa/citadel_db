@@ -10,7 +10,6 @@ def _zip_dir(path, ziph):
         for file in files:
             if not file.__contains__('locked') and not file.__contains__('.DS_Store'):
                 print("Writing " + file)
-                # ziph.write(os.path.join(root, file))
                 ziph.add(os.path.join(root, file))
 
 
@@ -22,15 +21,9 @@ class Storage:
 
     def __init__(self):
         # initialy will open for read
-        # self.db_storage = zipfile.ZipFile(self.db_name, 'r')
-
-        # self.db_storage = BZ2File(self.db_name)
-        # print self.db_storage.
-        # self.table_names = self.db_storage.namelist()
         self.db_storage = tarfile.open(self.db_name, 'r:')
-        if not self.db_storage is None:
+        if self.db_storage is not None:
             self.table_names = self.db_storage.getnames()
-
 
     def open_file(self, file_name):
         if file_name not in self.table_names:
@@ -43,7 +36,6 @@ class Storage:
     def close(self):
         self.db_storage.members = []
         self.db_storage.close()
-
 
     def read(self, n):
         if self.current_file is None:
@@ -59,9 +51,6 @@ class Storage:
         self.current_file.seek(offset)
 
     def save_all(self, path):
-        # self.db_storage.close()
-        # self.db_storage = zipfile.ZipFile(self.db_name, 'w')
-        # self.db_storage = GzipFile(self.db_name, 'w:')
         print("Saving all data")
         self.db_storage = tarfile.open(self.db_name, 'w:')
         _zip_dir(path, self.db_storage)
@@ -74,6 +63,14 @@ class Storage:
         :return:
         '''
         self.db_storage.close()
-        self.db_storage = tarfile.open(self.db_name, 'a')
+        self.db_storage = tarfile.open(self.db_name, 'a:')
         self.db_storage.add(path)
         self.db_storage.close()
+
+    def extract(self, part_name):
+        self.db_storage.close()
+        self.db_storage = tarfile.open(self.db_name)
+        candidates = [i for i in self.table_names if str(i).__contains__(part_name)]
+        for i in candidates:
+            self.db_storage.extract(self.db_storage.getmember(str(i)))
+
