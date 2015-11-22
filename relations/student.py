@@ -40,10 +40,6 @@ class student:
     """
 
     def get_string(self):
-        id_offset = 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1
-        name_offset = id_offset + 1 + len(str(self.attrs['id^']))  # 2 symbols or that
-        email_offset = name_offset + 1 + len(self.attrs['name'])
-        address_offset = email_offset + 1 + len(self.attrs['email'])
         res = ''
         res += self.add_spaces_to_size(str(1), 2) + '$'
         # res += self.add_spaces_to_size(str(id_offset),2) + '$'
