@@ -78,10 +78,10 @@ def _parse(query, db):
         if len(tableList) != 0:
             for t in tableList:
                 for k in t.get_identifiers():
-                    tables.append(str(k))
+                    tables.append(str(k).lower())
         if len(tableIdent) != 0:
             for i in tableIdent:
-                tables.append(str(i))
+                tables.append(str(i).lower())
         if len(tables) == 0:
             raise (BaseException("No table name identifiers provided! "))
 
@@ -100,9 +100,9 @@ def _parse(query, db):
             poss_tab = str(ident).upper().split(' AS ')
             if len(poss_tab) > 1:
                 # Can be spited
-                aliases[poss_tab[1]] = poss_tab[0]
+                aliases[poss_tab[1].lower()] = poss_tab[0].lower()
             else:
-                aliases[poss_tab[0]] = poss_tab[0]
+                aliases[poss_tab[0].lower()] = poss_tab[0].lower()
 
         if len(tables) > 1:
             print("Processing hash join select")
@@ -115,7 +115,7 @@ def _parse(query, db):
                 # there is on_index + join:
                 for ind in on_index:
                     cond = query_tokens.tokens[ind]
-                    all_field = str(cond).upper().split()
+                    all_field = str(cond).lower().split()
 
                     ident_field = all_field[0]
                     log_field = all_field[1]
@@ -172,9 +172,12 @@ def _parse(query, db):
                                 else:
                                     raise (BaseException("Unsupported feature"))
                             else:
-                                c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename)
-                                c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
-                                c = database.cursor.join_cursor(c1, c2, field1, field2)
+                                c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename,
+                                                            on_field=field1)
+                                c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename,
+                                                            on_field=field2)
+                                c = database.cursor.join_cursor(c1, c2, true_ident1 + '.' + field1,
+                                                                true_ident2 + '.' + field2)
 
                         elif len(projections) != 0:
                             # ordered_on='name'

@@ -520,7 +520,7 @@ class join_cursor(cursor):
         self.type_attrs1 = cursor1.type_attrs[:]
         self.type_attrs2 = cursor2.type_attrs[:]
         tmp_type_attr2 = self.type_attrs2[:]
-        tmp_type_attr2.remove(on_field2)
+        tmp_type_attr2.remove(on_field2.split('.')[1])
         self.db = None
         try:
             self.db = cursor1.on_cursor.on_cursor.db
@@ -565,23 +565,23 @@ class join_cursor(cursor):
     def next(self):
         val1 = self.cursor1.next()
         val2 = self.cursor2.next()
-        key1 = val1[self.cursor1.type_attrs.index(self.on_field1)]
-        key2 = val2[self.cursor2.type_attrs.index(self.on_field2)]
+        key1 = val1[self.cursor1.type_attrs.index(self.on_field1.split('.')[1])]
+        key2 = val2[self.cursor2.type_attrs.index(self.on_field2.split('.')[1])]
         while True:
             if not self.cursor1.has_next() or not self.cursor2.has_next():
                 self.exit = True
                 return self.prev_res
             if key1 < key2:
                 val1 = self.cursor1.next()
-                key1 = val1[self.cursor1.type_attrs.index(self.on_field1)]
+                key1 = val1[self.cursor1.type_attrs.index(self.on_field1.split('.')[1])]
             elif key2 < key1:
                 val2 = self.cursor2.next()
-                key2 = val2[self.cursor2.type_attrs.index(self.on_field2)]
+                key2 = val2[self.cursor2.type_attrs.index(self.on_field2.split('.')[1])]
             else:
                 break
         arr_val1 = [t for t in val1]
         arr_val2 = [t for t in val2]
-        del arr_val2[self.cursor2.type_attrs.index(self.on_field2)]
+        del arr_val2[self.cursor2.type_attrs.index(self.on_field2.split('.')[1])]
         res_tuple = tuple(x for x in arr_val1 + arr_val2)
         self.prev_res = res_tuple
         return res_tuple

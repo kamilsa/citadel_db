@@ -10,17 +10,17 @@ class driver:
     db = None
     tables = []
 
+    def __init__(self):
+        self.db = Database()
+
+    def add_to_database(self, types):
+        self.db.add_table(Table(type=types, from_dump=True))
+
+
     def connect(self):
 
         # TODO : remove this
         # here should connect to database file
-        db_exits = os.path.exists('storage/student.txt')
-        print(db_exits)
-
-        if db_exits:
-            self.db = Database()
-            self.db.add_table(Table(type=student, from_dump=True))
-            print("Database already exist. Working with dumb")
 
         print("Connected to database ")
         return Connection(self.db)

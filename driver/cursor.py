@@ -43,6 +43,7 @@ class Cursor:
             while self.pointer.has_next():
                 temp.append(self.pointer.next())
             self.refresh()
+        print "OMG THE SIZE IS ", len(temp)
         return temp
 
 
