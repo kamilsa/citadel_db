@@ -56,7 +56,6 @@ def _parse(query, db):
 
         print "ON INDEXES ", on_index
 
-
         where = [token for token in query_tokens.tokens if isinstance(token, Where)]
         condition = []
         comparison = []
@@ -151,7 +150,7 @@ def _parse(query, db):
                     local_table2 = db.tables[true_ident2.lower()]
 
                     if log_field == '=':
-                         if proj.is_whitespace() or str(proj) == '*' or str(proj).upper() == "FROM":
+                        if proj.is_whitespace() or str(proj) == '*' or str(proj).upper() == "FROM":
                             # No projection - full select
 
                             if condition is not None and len(condition) != 0:
@@ -164,16 +163,54 @@ def _parse(query, db):
                                 if logic_field == '=':
                                     # TODO : Will not work
                                     c1 = database.cursor.select_cursor(db=local_table1, filename=local_table1.filename,
-                                                                      on_field=indntity_field, equal_to=condition_field)
+                                                                       on_field=indntity_field,
+                                                                       equal_to=condition_field)
                                     c2 = database.cursor.select_cursor(db=local_table2, filename=local_table2.filename,
-                                                                      on_field=indntity_field, equal_to=condition_field)
+                                                                       on_field=indntity_field,
+                                                                       equal_to=condition_field)
+                                    c = database.cursor.join_cursor(c1, c2, field1, field2)
                                 else:
                                     raise (BaseException("Unsupported feature"))
                             else:
                                 c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename)
                                 c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
                                 c = database.cursor.join_cursor(c1, c2, field1, field2)
-                         else:
+
+                        elif len(projections) != 0:
+                            # ordered_on='name'
+                            print("Projection select ")
+                            if condition is not None and len(condition) != 0:
+                                # TODO : Make for all. Now for one condition only
+                                cond = condition[0]
+                                split_field = str(cond).split()
+                                indntity_field = all_field[0]
+                                logic_field = all_field[1]
+                                condition_field = ' '.join(all_field[2:])
+                                if logic_field == '=':
+                                    # TODO : Will not work
+                                    c1 = database.cursor.select_cursor(db=local_table1, filename=local_table1.filename,
+                                                                       on_field=indntity_field,
+                                                                       equal_to=condition_field)
+                                    c2 = database.cursor.select_cursor(db=local_table2, filename=local_table2.filename,
+                                                                       on_field=indntity_field,
+                                                                       equal_to=condition_field)
+                                    c = database.cursor.join_cursor(c1, c2, field1, field2)
+                                else:
+                                    raise (BaseException("Unsupported feature"))
+                            else:
+                                c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename)
+                                c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
+                                c = database.cursor.join_cursor(c1, c2, field1, field2)
+                            # TODO Add here
+                            if len(ordered) != 0:
+                                c = database.cursor.project_cursor(filename=local_table.filename,
+                                                                   fields=projections, ordered_on=ordered[0],
+                                                                   on_cursor=c)
+                            else:
+                                c = database.cursor.project_cursor(filename=local_table.filename,
+                                                                   fields=projections,
+                                                                   on_cursor=c)
+                        else:
                             raise (BaseException("Unsupported feature jet"))
                     else:
                         raise (BaseException("Wrong condition in joining "))
