@@ -160,7 +160,7 @@ def _parse(query, db, parametrs):
                                 indntity_field = all_field[0]
                                 logic_field = all_field[1]
                                 condition_field = ' '.join(all_field[2:])
-                                if condition_field.__contains__('%s'):
+                                if condition_field.lower().__contains__('%s'):
                                     condition_field = parametrs[0]
                                 if logic_field == '=':
                                     # TODO : Will not work
@@ -202,18 +202,27 @@ def _parse(query, db, parametrs):
                                                                 true_ident2 + '.' + field2)
 
                         elif len(projections) != 0:
+                            i = 0
+                         #   print projections
+                         #   for i in range(len(projections)):
+                         #            proc = str(projections[i]).split('.')
 
+                         #       if len(proc) > 1:
+                         #           projections[i] = aliases[proc[0]] +'.' + proc[1]
+                         #   print projections
                             # ordered_on='name'
                             print("Projection select ")
                             if condition is not None and len(condition) != 0:
                                 # TODO : Make for all. Now for one condition only
                                 cond = condition[0]
                                 split_field = str(cond).split()
-                                indntity_field = all_field[0]
-                                logic_field = all_field[1]
-                                condition_field = ' '.join(all_field[2:])
-                                if condition_field.__contains__('%s'):
+
+                                indntity_field = split_field[0]
+                                logic_field = split_field[1]
+                                condition_field = ' '.join(split_field[2:])
+                                if condition_field.lower().__contains__('%s'):
                                     condition_field = parametrs[0]
+                                print "CONDTION ", condition_field
                                 if logic_field == '=':
                                         # TODO : Will not work
                                         idents = indntity_field.split('.')
@@ -247,10 +256,10 @@ def _parse(query, db, parametrs):
                                                                            equal_to=condition_field)
                                         c2 = database.cursor.cursor(db=other_table, filename=other_table.filename,
                                                                     on_field=other_field)
-                                        print "TRUE ident field ", true_ident_field,temp_table.filename
+
                                         c = database.cursor.join_cursor(c1, c2, first_ident + '.' + true_ident_field,
                                                                                 sec_ident + '.' + other_field)
-                                        condition = None
+                                        condition = []
                                 else:
                                     raise (BaseException("Unsupported feature"))
                             else:
@@ -271,6 +280,7 @@ def _parse(query, db, parametrs):
                             #                                       fields=projections, ordered_on=ordered[0],
                             #                                       on_cursor=c)
                             #else:
+
                             c = database.cursor.project_cursor(filename=None,
                                                                fields=projections,
                                                                on_cursor=c)
@@ -300,6 +310,8 @@ def _parse(query, db, parametrs):
                     ident_field = all_field[0]
                     log_field = all_field[1]
                     cond_field = ' '.join(all_field[2:])
+                    if cond_field.lower().__contains__('%s'):
+                             cond_field = parametrs[0]
                     if log_field == '=':
                         c = database.cursor.select_cursor(db=local_table, filename=local_table.filename,
                                                           on_field=ident_field, equal_to=cond_field)
@@ -328,6 +340,9 @@ def _parse(query, db, parametrs):
                     ident_field = all_field[0]
                     log_field = all_field[1]
                     cond_field = ' '.join(all_field[2:])
+                    if cond_field.lower().__contains__('%s'):
+                             cond_field = parametrs[0]
+                    print "Condition field ", cond_field
                     if log_field == '=':
                         c = database.cursor.select_cursor(db=local_table, filename=local_table.filename,
                                                           on_field=ident_field, equal_to=cond_field)
