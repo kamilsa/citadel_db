@@ -10,8 +10,15 @@ class Cursor:
     def __init__(self, db):
         self.db = db
 
-    def execute(self, query):
-        self.pointer, self._limit = _parse(query, self.db)
+    def execute(self, query, *vartuple):
+        parametrs = []
+        if vartuple is not None:
+            for i in vartuple:
+                parametrs.append(i)
+        if len(parametrs) > 0:
+            self.pointer, self._limit = _parse(query, self.db, parametrs)
+        else:
+            self.pointer, self._limit = _parse(query, self.db, None)
 
     def close(self):
         pass

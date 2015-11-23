@@ -10,7 +10,7 @@ def __table_exists(db, name):
     return name in db.tables.keys()
 
 
-def _parse(query, db):
+def _parse(query, db, parametrs):
     query_tokens = sqlparse.parse(query)[0]
 
     # still no subqueries
@@ -110,11 +110,11 @@ def _parse(query, db):
                 if not __table_exists(db, table_name):
                     raise (BaseException("No table named " + table_name))
             print tables
-
+            i = 0
             if len(on_index) > 0:
                 # there is on_index + join:
-                for ind in on_index:
-                    cond = query_tokens.tokens[ind]
+                for indx in on_index:
+                    cond = query_tokens.tokens[indx]
                     all_field = str(cond).lower().split()
 
                     ident_field = all_field[0]
@@ -131,8 +131,8 @@ def _parse(query, db):
                         true_ident1 = aliases[alias1]
                     else:
                         field1 = ident1[0]
-                    print "First table is ", true_ident1
-                    print "First field if ", field1
+                    print "First table is ", alias1 + true_ident1
+                    print "First field if ", alias1 + field1
                     # ------ Second identy
                     ident2 = cond_field.split('.')
                     true_ident2 = ''
@@ -144,8 +144,8 @@ def _parse(query, db):
                         true_ident2 = aliases[alias2]
                     else:
                         field2 = ident2[0]
-                    print "Second table is ", true_ident2
-                    print "Second field if ", field2
+                    print "Second table is ", alias2 + true_ident2
+                    print "Second field if ", alias2 + field2
                     local_table1 = db.tables[true_ident1.lower()]
                     local_table2 = db.tables[true_ident2.lower()]
 
@@ -160,15 +160,37 @@ def _parse(query, db):
                                 indntity_field = all_field[0]
                                 logic_field = all_field[1]
                                 condition_field = ' '.join(all_field[2:])
+                                if condition_field.__contains__('%s'):
+                                    condition_field = parametrs[0]
                                 if logic_field == '=':
                                     # TODO : Will not work
-                                    c1 = database.cursor.select_cursor(db=local_table1, filename=local_table1.filename,
-                                                                       on_field=indntity_field,
+                                    idents = indntity_field.split('.')
+                                    true_ident_field = ''
+                                    on_table_field = ''
+                                    if len(idents) > 0:
+                                        true_ident_field = idents[1]
+                                        on_table_field = idents[0]
+                                    else:
+                                        true_ident_field = idents[0]
+                                    temp_table = None
+                                    other_table = None
+                                    other_field = ''
+                                    if on_table_field == local_table1.filename:
+                                        temp_table = local_table1
+                                        other_table = local_table2
+                                        other_field = field2
+                                    else:
+                                        temp_table = local_table2
+                                        other_table = local_table1
+                                        other_field = field1
+
+                                    c1 = database.cursor.select_cursor(db=temp_table, filename=temp_table.filename,
+                                                                       on_field=true_ident_field,
                                                                        equal_to=condition_field)
-                                    c2 = database.cursor.select_cursor(db=local_table2, filename=local_table2.filename,
-                                                                       on_field=indntity_field,
-                                                                       equal_to=condition_field)
-                                    c = database.cursor.join_cursor(c1, c2, field1, field2)
+                                    c2 = database.cursor.cursor(db=other_table, filename=other_table.filename,
+                                                                on_field=other_field)
+
+                                    c = database.cursor.join_cursor(c1, c2, temp_table.filename + '.'+ true_ident_field, other_field)
                                 else:
                                     raise (BaseException("Unsupported feature"))
                             else:
@@ -180,6 +202,7 @@ def _parse(query, db):
                                                                 true_ident2 + '.' + field2)
 
                         elif len(projections) != 0:
+
                             # ordered_on='name'
                             print("Projection select ")
                             if condition is not None and len(condition) != 0:
@@ -189,30 +212,68 @@ def _parse(query, db):
                                 indntity_field = all_field[0]
                                 logic_field = all_field[1]
                                 condition_field = ' '.join(all_field[2:])
+                                if condition_field.__contains__('%s'):
+                                    condition_field = parametrs[0]
                                 if logic_field == '=':
-                                    # TODO : Will not work
-                                    c1 = database.cursor.select_cursor(db=local_table1, filename=local_table1.filename,
-                                                                       on_field=indntity_field,
-                                                                       equal_to=condition_field)
-                                    c2 = database.cursor.select_cursor(db=local_table2, filename=local_table2.filename,
-                                                                       on_field=indntity_field,
-                                                                       equal_to=condition_field)
-                                    c = database.cursor.join_cursor(c1, c2, field1, field2)
+                                        # TODO : Will not work
+                                        idents = indntity_field.split('.')
+                                        true_ident_field = ''
+                                        on_table_field = ''
+                                        if len(idents) > 0:
+                                            true_ident_field = idents[1]
+                                            on_table_field = idents[0]
+                                        else:
+                                            true_ident_field = idents[0]
+                                        temp_table = None
+                                        other_table = None
+                                        other_field = ''
+                                        first_ident = ''
+                                        sec_ident = ''
+                                        if on_table_field == local_table1.filename:
+                                            temp_table = local_table1
+                                            other_table = local_table2
+                                            other_field = field2
+                                            first_ident = true_ident1
+                                            sec_ident = true_ident2
+                                        else:
+                                            temp_table = local_table2
+                                            other_table = local_table1
+                                            other_field = field1
+                                            first_ident = true_ident2
+                                            sec_ident = true_ident1
+
+                                        c1 = database.cursor.select_cursor(db=temp_table, filename=temp_table.filename,
+                                                                           on_field=true_ident_field,
+                                                                           equal_to=condition_field)
+                                        c2 = database.cursor.cursor(db=other_table, filename=other_table.filename,
+                                                                    on_field=other_field)
+                                        print "TRUE ident field ", true_ident_field,temp_table.filename
+                                        c = database.cursor.join_cursor(c1, c2, first_ident + '.' + true_ident_field,
+                                                                                sec_ident + '.' + other_field)
+                                        condition = None
                                 else:
                                     raise (BaseException("Unsupported feature"))
                             else:
-                                c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename)
-                                c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
-                                c = database.cursor.join_cursor(c1, c2, field1, field2)
+                                if i == 0:
+                                    c1 = database.cursor.cursor(db=local_table1, filename=local_table1.filename)
+                                    c2 = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
+                                    c = database.cursor.join_cursor(c1, c2, true_ident1 + '.' + field1,
+                                                                            true_ident2 + '.' + field2)
+                                    i += 1
+                                else:
+                                    cs = database.cursor.cursor(db=local_table2, filename=local_table2.filename)
+                                    c = database.cursor.join_cursor(c, cs, true_ident1 + '.' + field1,
+                                                                            true_ident2 + '.' + field2)
+                                    i += 1
                             # TODO Add here
-                            if len(ordered) != 0:
-                                c = database.cursor.project_cursor(filename=local_table.filename,
-                                                                   fields=projections, ordered_on=ordered[0],
-                                                                   on_cursor=c)
-                            else:
-                                c = database.cursor.project_cursor(filename=local_table.filename,
-                                                                   fields=projections,
-                                                                   on_cursor=c)
+                            #if len(ordered) != 0:
+                            #    c = database.cursor.project_cursor(filename=None,
+                            #                                       fields=projections, ordered_on=ordered[0],
+                            #                                       on_cursor=c)
+                            #else:
+                            c = database.cursor.project_cursor(filename=None,
+                                                               fields=projections,
+                                                               on_cursor=c)
                         else:
                             raise (BaseException("Unsupported feature jet"))
                     else:
